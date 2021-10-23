@@ -1,3 +1,6 @@
+This tool will calculate the price of an asset if it were at another assets market cap.
+It will specifically compare all assets you specify against the first 3 rows of data.
+
 1. Download and place the following files into the same folder on your machine:
 	MarketCapCompare.ps1
 	input.csv
