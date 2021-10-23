@@ -1,14 +1,16 @@
-
+#initialize inputs and outputs
 $inputPath = $PSScriptRoot+"\input.csv"
 $inputTable = Import-Csv -Path $inputPath
 $sysDateTime = get-date -Format "dd-MM-yyyy HH-mm"
 $outTablePath = $PSScriptRoot+"\TableResult"+$sysDateTime+".csv"
 $textOutPath = $PSScriptRoot+"\TextResults"+ $sysDateTime +".txt"
 
+#calculate top3 rows of data to compare other assets against
 $asset1cap = [decimal]$inputTable[0].UnitPrice * [decimal]$inputTable[0].UnitSupply
 $asset2cap = [decimal]$inputTable[1].UnitPrice * [decimal]$inputTable[1].UnitSupply
 $asset3cap = [decimal]$inputTable[2].UnitPrice * [decimal]$inputTable[2].UnitSupply
 
+#formatting reference data for text output
 $msg= "PRICES @ DIFFERNET MARKET CAPs`n"
 $msg= $msg + "===============================`n"
 $msg= $msg + "Comparing assets against the following 3...`n"
@@ -19,6 +21,7 @@ $msg= $msg + $inputTable[2].AssetName + " Market Cap: " + $asset3cap +"`n"
 write-host $msg
 $msg | Add-Content -Path $textOutPath
 
+#initialize computation table
 $computeTable = New-Object System.Data.DataTable
 $columns = @("Ticker","Price","Supply","MarketCap","PriceAtAsset1Cap","HowManyX1","PriceAtAsset2Cap","HowManyX2","PriceAtAsset3Cap","HowManyX3")
 foreach($col in $columns)
@@ -26,6 +29,7 @@ foreach($col in $columns)
     $holdOutput = $computeTable.columns.Add($col)
 }
 
+#Assign and calculate row values for each asset in input
 foreach($inasset in $inputTable)
 {
     $row = $computeTable.NewRow()
@@ -39,7 +43,8 @@ foreach($inasset in $inputTable)
     $row.HowManyX2 = [math]::Round($row.PriceAtAsset2Cap / $row.Price,2)
     $row.PriceAtAsset3Cap = [math]::Round($asset3cap/$row.MarketCap * $row.Price,2)
     $row.HowManyX3 = [math]::Round($row.PriceAtAsset3Cap / $row.Price,2)
-
+    
+    #more text output
     $message = $row.Ticker + "-----------------------------`n"
     $message = $message + "`$" + $row.Price + "/" + $row.Ticker + " @ current MarketCap `n"
     $message = $message + "`$" + $row.PriceAtAsset1Cap + "/" + $row.Ticker + " @ " + $inputTable[0].AssetName + "'s MarketCap ("+$row.HowManyX1+"x)`n"
@@ -49,5 +54,5 @@ foreach($inasset in $inputTable)
     $message | Add-Content -Path $textOutPath
     $computeTable.Rows.Add($row)
 }
-
+#export table to csv and user can format result table as needed
 $computeTable | Export-Csv -Path $outTablePath -NoTypeInformation
